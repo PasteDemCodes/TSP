@@ -15,15 +15,17 @@ import matplotlib.pyplot as plt
 #      -    Crossover Rate.
 #
 
-TotalCities = 15
+#   Adjust these to problem.
+#   Please Keep Cities and Chromosomes > 1
+TotalCities = 5
 Chromosomes = 3
-TotalGenerations = 5
+TotalGenerations = 4
 CrossOverRate = 0.25
-
-Generation = 0
 MutationRate = 0.1
 
-#   If a gen is below this number, it shall mutate.
+Generation = 0
+
+#   If a gene is below this number, it shall mutate.
 MutationNumber = int((TotalCities * Chromosomes) * MutationRate)
 
 #   Total Score of Generation
@@ -110,6 +112,7 @@ def CalcPathScore(Path):
 #   This Function Creates the City Connection Graph.
 #   Parameters: Path -  Fittest Path of Generation should be given.
 #               Index - Index of Fittest Path.
+#               PathScore - Score of Fittest Path
 def PlotCities(Path, index, PathScore):
 
     #   Clear existing figure.
@@ -144,10 +147,12 @@ def PlotCities(Path, index, PathScore):
     #   x[3] = City #0 x location, y[3] = City #0 y location.
 
     for i in range(TotalCities):
-    
         curCity = Path[index][i]
         x.append(Cities[curCity][0])
         y.append(Cities[curCity][1])
+
+        #   Adding Labels to Data Points.
+        plt.text(Cities[curCity][0], Cities[curCity][1], '  City ' + str(curCity))
 
     x.append(Cities[Path[index][0]][0])
     y.append(Cities[Path[index][0]][1])
@@ -258,21 +263,25 @@ def CalcNewPath(Path, Roulette, RandomPossibilities):
 
     return NewPath
 
-#   Crossover-ing Paths may cause duplicated to appear.
+#   Crossover-ing Paths may cause duplicates to appear.
 #   Use this to fix that.
 #   Returns Int Array.
 def FixPaths(Path):
     Temp = copy.copy(Path)
-
-    for i in range(len(Temp)  ):
+    print 'Mutated Path:\t' + str(Temp)
+    for i in range(Chromosomes):
         notSeen = []
         duplicates = []
         for x in range(len(Temp[i])):
             if x not in Temp[i]:
                 notSeen.append(x)
+
             else:
                 if Temp[i].count(x) > 1:
-                    duplicates.append(x)
+
+                    #   If Found more than 2 times, need to append accordingly.
+                    for j in range(1, Temp[i].count(x)):
+                        duplicates.append(x)
 
         for x in range(len(duplicates)):
             index = Temp[i].index(duplicates[x])
@@ -338,7 +347,7 @@ def Crossover(Path):
         if (Path[x] == [0]):
             Path[x] = Temp.pop()
 
-    print 'New Path Generated: ' + str(Path)
+    print 'Crossovered Path:\t' + str(Path)
 
     Path = Mutation(Path)
     return Path
@@ -386,6 +395,8 @@ print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 
 #   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 0 GEN ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+print 'CURRENT GENERATION: 0'
+
 #   Saving values of Best Path and each Index in Paths/ NewPaths Arrays for printing at the very end.
 TempIndex = 0
 BestPath = []
@@ -431,6 +442,8 @@ BestScore = min(PathScore)
 
 BestScorePath = copy.copy(PathScore)
 
+
+
 #   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 0 GEN ENDS HERE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #
@@ -442,17 +455,14 @@ BestScorePath = copy.copy(PathScore)
 #
 
 
-for x in range(TotalGenerations):
+for x in range(1,TotalGenerations + 1):
+    print ''
+    print 'CURRENT GENERATION: ' + str(x)
     NewPath = CalcNewPath(Path, Roulette, RandomPossibilities)
 
-    Crossover(NewPath)
+    NewPath = Crossover(NewPath)
 
     PathScore = CalcPathScore(NewPath)
-    Fitness = CalcFitness(PathScore)
-    Total = CalcTotal(Fitness)
-    Probability = CalcProbabilities(Fitness, Total)
-    Roulette = CalcRoulette(Probability)
-    RandomPossibilities = [random.uniform(0.0, 1.0) for x in range(Chromosomes)]
 
     if (min(PathScore) < BestScore):
         Generation = x
@@ -464,6 +474,19 @@ for x in range(TotalGenerations):
 
         TempIndex = PathScore.index(min(PathScore))
         PlotCities(NewPath, TempIndex, PathScore)
+
+    #   Mutation of Paths is happening first, so i have to loop one more time than total Generations.
+    #   Need to stop creating new paths when that happens.
+    #   Keeping PathScore outside, just to display scores of last Gen.
+
+    if (x < TotalGenerations):
+        Fitness = CalcFitness(PathScore)
+        Total = CalcTotal(Fitness)
+        Probability = CalcProbabilities(Fitness, Total)
+        Roulette = CalcRoulette(Probability)
+        RandomPossibilities = [random.uniform(0.0, 1.0) for x in range(Chromosomes)]
+
+
 
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~     #############       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
